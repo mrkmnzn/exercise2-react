@@ -1,5 +1,4 @@
 import React from "react";
-import logo from "./logo.svg";
 import "./App.css";
 import { PRODUCTS_DATA } from "./data/products";
 import { useState } from "react";
@@ -9,58 +8,144 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import { makeStyles } from "@material-ui/core/styles";
+import NavBar from "./components/NavBar";
+
+import Counters from "./components/Counters";
+
+//css
+const useStyles = makeStyles({
+  cardContainer: {
+    paddingTop: 80,
+    flexWrap: "wrap",
+    display: "flex",
+    whiteSpace: "nowrap",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  card: {
+    margin: "5px",
+    width: 250,
+    height: 450,
+  },
+  media: {
+    height: 300,
+  },
+});
 
 function App() {
-  console.log("me");
+  const [cartItems, setCartItems] = useState([]);
   const [products, setProducts] = useState(PRODUCTS_DATA);
-  console.log(PRODUCTS_DATA);
+  const [counter, setCounter] = useState(
+    products.map((product) => ({
+      ...product,
+      qty: 1,
+    }))
+  );
 
+  const handleIncrement = (id) => {
+    setCounter(
+      counter.map((counter) => {
+        if (counter.id === id) {
+          return {
+            ...counter,
+            qty: counter.qty + 1,
+          };
+        }
+        return counter;
+      })
+    );
+  };
+
+  const handleDecrement = (id) => {
+    setCounter(
+      counter.map((counter) => {
+        if (counter.id === id) {
+          return {
+            ...counter,
+            qty: counter.qty - 1,
+          };
+        }
+        return counter;
+      })
+    );
+  };
+
+  const handleReset = () => {
+    setCounter(
+      counter.map((counter) => {
+        return {
+          ...counter,
+          qty: 1,
+        };
+      })
+    );
+  };
+
+  const handleAddToCart = (id) => {
+    const product = counter.find((product) => product.id === id);
+    if (!product) {
+      return;
+    }
+    const existingProduct = cartItems.find((item) => item.id === id);
+
+    if (!existingProduct) {
+      setCartItems([...cartItems, product]);
+    } else {
+      setCartItems(
+        cartItems.map((item) =>
+          item.id === id ? { ...item, qty: item.qty + product.qty } : item
+        )
+      );
+    }
+
+    handleReset();
+  };
+  //currency
   const currencyFormatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   });
 
+  const classes = useStyles();
+
   return (
     <div>
-      {PRODUCTS_DATA.map((item) => (
-        <Card key={item.id} sx={{ maxWidth: 345 }}>
-          <CardMedia component="img" alt="green iguana" image={item.image} />
-          <CardContent>
-            <Typography variant="h5" component="h2">
-              {currencyFormatter.format(item.price)}
-            </Typography>
-            <Typography variant="body2" component="p">
-              {item.title}
-            </Typography>
-          </CardContent>
-          <CardActions>
-            <Button size="small">Add</Button>
-            <Button size="small">+ -</Button>
-          </CardActions>
-        </Card>
-      ))}
+      <div>
+        <NavBar cartItems={cartItems} />
+      </div>
+
+      <div className={classes.cardContainer}>
+        {counter.map((item) => (
+          <Card key={item.id} sx={{ maxWidth: 345 }} className={classes.card}>
+            <CardMedia
+              className={classes.media}
+              component="img"
+              alt="green iguana"
+              image={item.image}
+            />
+            <CardContent>
+              <Typography variant="h5" component="h2">
+                {currencyFormatter.format(item.price)}
+              </Typography>
+              <Typography variant="body2" component="p">
+                {item.title}
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Counters
+                counter={counter}
+                onAddToCart={handleAddToCart}
+                onIncrement={handleIncrement}
+                onDecrement={handleDecrement}
+                id={item.id}
+                onReset={handleReset}
+              />
+            </CardActions>
+          </Card>
+        ))}
+      </div>
     </div>
-    // <Card sx={{ maxWidth: 345 }}>
-    //   <CardMedia
-    //     component="img"
-    //     alt="green iguana"
-    //     height="140"
-    //     image="https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_.jpg"
-    //   />
-    //   <CardContent>
-    //     <Typography gutterBottom variant="h5" component="div">
-    //       Lizard
-    //     </Typography>
-    //     <Typography variant="body2" color="text.secondary">
-    //       Lizards are a widespread group of squamate reptiles, with over 6,000
-    //       species, ranging across all continents except Antarctica
-    //     </Typography>
-    //   </CardContent>
-    //   <CardActions>
-    //     <Button size="small">Share</Button>
-    //     <Button size="small">Learn More</Button>
-    //   </CardActions>
-    // </Card>
   );
 }
 
